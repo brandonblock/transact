@@ -13,6 +13,7 @@ type Channeler struct {
 	transactions chan Transaction
 	lastHash     string
 	lastWrite    time.Time
+	activeBlock  Block
 }
 
 type Transaction struct {
@@ -64,10 +65,11 @@ func (ch *Channeler) record() {
 		log.Printf("%v", t)
 		ts = append(ts, t)
 		if ch.lastWrite.Before(time.Now().Add(-30 * time.Second)) {
-			//TODO: Make this block accesible outside this clause, check lastWrite time constantly
-			b := Block{}
-			b.transactions = ts
-			log.Printf("%v", b)
+			//TODO: check lastWrite time constantly
+			ch.activeBlock.transactions = ts
+			log.Printf("%v", ch.activeBlock.transactions)
+			ts = []Transaction{}
+			ch.activeBlock = Block{}
 			ch.lastWrite = time.Now()
 		}
 	}
