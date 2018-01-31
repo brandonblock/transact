@@ -64,7 +64,7 @@ func (ch *Channeler) record() {
 		log.Printf("%v", t)
 		ts = append(ts, t)
 		if ch.lastWrite.Before(time.Now().Add(-30 * time.Second)) {
-			//TODO: Make this block accesible outside this clause
+			//TODO: Make this block accesible outside this clause, check lastWrite time constantly
 			b := Block{}
 			b.transactions = ts
 			log.Printf("%v", b)
