@@ -6,15 +6,17 @@ import (
 )
 
 func main() {
-	bus := &Channeler{
+	ch := &Channeler{
 		requests:     make(chan http.Request),
 		transactions: make(chan Transaction),
-		lastWrite:    time.Now(),
+		blocks:       make(chan Block),
 		activeBlock:  Block{},
+		ticker:       time.NewTicker(time.Second * 10),
 	}
-	go bus.transact()
-	go bus.record()
+	go ch.transact()
+	go ch.record()
+	go ch.write()
 
-	http.HandleFunc("/tx", bus.handler)
+	http.HandleFunc("/tx", ch.handler)
 	http.ListenAndServe(":8080", nil)
 }
