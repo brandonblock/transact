@@ -5,11 +5,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Channeler struct {
 	requests     chan http.Request
 	transactions chan Transaction
+	lastHash     string
+	lastWrite    time.Time
 }
 
 type Transaction struct {
@@ -55,8 +58,18 @@ func (ch *Channeler) transact() {
 }
 
 func (ch *Channeler) record() {
+
+	ts := []Transaction{}
 	for t := range ch.transactions {
 		log.Printf("%v", t)
+		ts = append(ts, t)
+		if ch.lastWrite.Before(time.Now().Add(-30 * time.Second)) {
+			//TODO: Make this block accesible outside this clause
+			b := Block{}
+			b.transactions = ts
+			log.Printf("%v", b)
+			ch.lastWrite = time.Now()
+		}
 	}
 }
 
