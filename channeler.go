@@ -9,11 +9,12 @@ import (
 )
 
 type Channeler struct {
-	requests     chan http.Request
-	transactions chan Transaction
-	lastHash     string
-	lastWrite    time.Time
-	activeBlock  Block
+	requests           chan http.Request
+	transactions       chan Transaction
+	lastHash           string
+	lastWrite          time.Time
+	activeBlock        Block
+	activeTransactions []Transaction
 }
 
 type Transaction struct {
@@ -60,15 +61,17 @@ func (ch *Channeler) transact() {
 
 func (ch *Channeler) record() {
 
-	ts := []Transaction{}
 	for t := range ch.transactions {
 		log.Printf("%v", t)
-		ts = append(ts, t)
+		ch.activeTransactions = append(ch.activeTransactions, t)
+		//TODO: check lastWrite time constantly
 		if ch.lastWrite.Before(time.Now().Add(-30 * time.Second)) {
-			//TODO: check lastWrite time constantly
-			ch.activeBlock.transactions = ts
-			log.Printf("%v", ch.activeBlock.transactions)
-			ts = []Transaction{}
+			ch.activeBlock.transactions = ch.activeTransactions
+			ch.activeBlock.blockHash = "hash" //TODO: generate hash of the block struct
+			ch.activeBlock.prevBlockHash = ch.lastHash
+			ch.lastHash = ch.activeBlock.blockHash
+			log.Printf("%+v", ch.activeBlock)
+			ch.activeTransactions = []Transaction{}
 			ch.activeBlock = Block{}
 			ch.lastWrite = time.Now()
 		}
