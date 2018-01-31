@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -60,14 +62,14 @@ func (ch *Channeler) transact() {
 }
 
 func (ch *Channeler) record() {
-
 	for t := range ch.transactions {
-		log.Printf("%v", t)
 		ch.activeTransactions = append(ch.activeTransactions, t)
 		//TODO: check lastWrite time constantly
 		if ch.lastWrite.Before(time.Now().Add(-30 * time.Second)) {
 			ch.activeBlock.transactions = ch.activeTransactions
-			ch.activeBlock.blockHash = "hash" //TODO: generate hash of the block struct
+			hasher := md5.New()
+			hasher.Write([]byte(fmt.Sprintf("%v%d", ch.activeBlock.transactions, time.Now().Unix())))
+			ch.activeBlock.blockHash = hex.EncodeToString(hasher.Sum(nil))
 			ch.activeBlock.prevBlockHash = ch.lastHash
 			ch.lastHash = ch.activeBlock.blockHash
 			log.Printf("%+v", ch.activeBlock)
